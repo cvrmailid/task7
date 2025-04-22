@@ -1,0 +1,74 @@
+//server.js
+const express = require('express');
+const axios = require('axios');
+const app = express();
+const PORT = 3000;
+
+app.set('view engine', 'ejs');
+
+app.get('/', async (req, res) => {
+    try {
+        const response = await axios.get('https://reqres.in/api/users');
+        const users = await response.data.data;
+        console.log(users);
+        res.render('users', { users });
+        // res.send("Done");
+    } catch (err) {
+        res.send('Error fetching data.');
+    }
+});
+
+app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
+});
+
+
+//views/users.ejs
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Table</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 80%;
+            margin: 20px auto;
+        }
+        th, td {
+            border: 1px solid #333;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        h1 {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Users from API</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Email</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% users.forEach(user => { %>
+                <tr>
+                    <td><%= user.id %></td>
+                    <td><%= user.email %></td>
+                    <td><%= user.first_name %></td>
+                    <td><%= user.last_name %></td>
+                </tr>
+            <% }); %>
+        </tbody>
+    </table>
+</body>
+</html>
+
