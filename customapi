@@ -1,0 +1,93 @@
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const app = express();
+
+// Set up middleware
+app.use(express.json());
+
+// Path to the user data file
+const userFilePath = path.join(__dirname, 'user.json');
+
+// Import users.json directly (with `require`)
+let users = require('./user.json');
+
+// Utility function to save data to user.json
+function saveUserData(data) {
+  fs.writeFileSync(userFilePath, JSON.stringify(data, null, 2));
+}
+
+// Create a new user
+app.post('/users', (req, res) => {
+  const { name, email } = req.body;
+  if (!name || !email) {
+    return res.status(400).json({ message: "Name and email are required." });
+  }
+
+  const newUser = {
+    id: users.length + 1,
+    name,
+    email
+  };
+
+  users.push(newUser);
+  saveUserData(users);
+  res.status(201).json(newUser);
+});
+
+// Get all users
+app.get('/users', (req, res) => {
+  res.status(200).json(users);
+});
+
+// Get user by ID
+app.get('/users/:id', (req, res) => {
+  const { id } = req.params;
+  const user = users.find(u => u.id === parseInt(id));
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found." });
+  }
+
+  res.status(200).json(user);
+});
+
+// Update user by ID
+app.put('/users/:id', (req, res) => {
+  const { id } = req.params;
+  const { name, email } = req.body;
+
+  if (!name || !email) {
+    return res.status(400).json({ message: "Name and email are required." });
+  }
+
+  const userIndex = users.findIndex(u => u.id === parseInt(id));
+
+  if (userIndex === -1) {
+    return res.status(404).json({ message: "User not found." });
+  }
+
+  users[userIndex] = { id: parseInt(id), name, email };
+  saveUserData(users);
+  res.status(200).json(users[userIndex]);
+});
+
+// Delete user by ID
+app.delete('/users/:id', (req, res) => {
+  const { id } = req.params;
+  const userIndex = users.findIndex(u => u.id === parseInt(id));
+
+  if (userIndex === -1) {
+    return res.status(404).json({ message: "User not found." });
+  }
+
+  users.splice(userIndex, 1);
+  saveUserData(users);
+  res.status(200).json({ message: "User deleted successfully." });
+});
+
+// Start the server
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
